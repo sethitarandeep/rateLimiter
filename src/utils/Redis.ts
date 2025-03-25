@@ -4,7 +4,7 @@ type RedisClientType = ReturnType<typeof createClient>;
 export let redisClient: RedisClientType;
 
 
-export const connect =  async () => {
+export const connectRedis =  async () => {
     if (!redisClient) {
         redisClient = await createClient({
             url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
@@ -20,4 +20,10 @@ export const connect =  async () => {
         .connect();
     }
     return redisClient;
+}
+
+export const disconnectRedis = async () => {
+    if (redisClient) {
+        await redisClient.quit();
+    }
 }
