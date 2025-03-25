@@ -11,7 +11,11 @@ declare global {
   }
 }
 
-
+/**
+ * Return a middleware to limit the number of requests per windowMs
+ * @param options Rate limit options
+ * @returns Middleware function
+ */
 export const rateLimit = (options: RateLimitOptions) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -41,6 +45,15 @@ export const rateLimit = (options: RateLimitOptions) => {
     }
 }
 
+
+/**
+ * Bonus task: Check for override limit if an event is present in request query and matches the event list
+ * from the config options. If override limit is applicable, set the limit and expiry in Redis and return the limit.
+ * @param req
+ * @param options
+ * @returns Override limit if applicable
+ * @throws Error if Redis operation fails
+ */
 const checkForOverride = async (req: Request, options: RateLimitOptions) => {
   try {
     if (!options.override) return undefined;
@@ -68,7 +81,13 @@ const checkForOverride = async (req: Request, options: RateLimitOptions) => {
   }
 }
 
-
+/**
+ * Get the request limit based on the user's authentication status
+ * @param req
+ * @param options
+ * @returns Request limit
+ * @throws Error if Redis operation fails
+ */
 const getRequestLimit = async (req: Request, options: RateLimitOptions) => {
   try {
     if (typeof options.limit !== 'number') {
@@ -99,13 +118,11 @@ const checkSlidingLogLimit = async (
     const now = Date.now();
     const windowStart = now - windowMs;
     
-    // Add current timestamp to the set
+    // Add timestamp to the set
     await redisClient.zAdd(key, { score: now, value: `${now}`});
     
-    // Purge expired entries
+    // Purge expired values
     await redisClient.zRemRangeByScore(key, 0, windowStart);
-    
-
     const count = await redisClient.zCard(key);
     await redisClient.expire(key, windowMs / 1000);
     
@@ -124,6 +141,7 @@ const checkSlidingLogLimit = async (
       remaining: Math.max(0, limit - count),
       resetTime
     });
+
     return {
       limit,
       current: count,
