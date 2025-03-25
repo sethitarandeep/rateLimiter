@@ -1,14 +1,12 @@
 import express from "express";
-
+import Routes from "./routes/Route";
+import { connect } from "./utils/Redis";
 
 const app = express();
-const port = 1212;
+const port = process.env.PORT || 3000;
 
-app.get("/", (req: express.Request, res: express.Response) => {
-  res.send("Rate limiter example");
-});
-
-
+app.use("/", new Routes().routes);
+connect();  
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
